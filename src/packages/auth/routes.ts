@@ -1,7 +1,7 @@
 import type { Express } from 'express';
 import rateLimit from 'express-rate-limit';
 import { getEnv } from '../../env.js';
-import { login, session } from './functions.js';
+import { login, loginSSO, session, validateSSOToken } from './functions.js';
 
 export default (app: Express) => {
   const { RATE_LIMITER_LOGIN_MAX } = getEnv();
@@ -44,6 +44,75 @@ export default (app: Express) => {
     const { body } = req;
     const { username, password } = body;
     const response = await login(username, password);
+    res.json(response);
+  });
+
+  /**
+   * @swagger
+   * /auth/loginSSO:
+   *   post:
+   *     consumes:
+   *       - application/json
+   *     produces:
+   *       - application/json
+   *     requestBody:
+   *       description: User's SSO token
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             properties:
+   *               ssoToken:
+   *                 type: string
+   *     responses:
+   *       200:
+   *         description: AuthResponse
+   *     summary: Login to initiate a session
+   *     tags:
+   *       - Auth
+   */
+  app.post('/auth/loginSSO', loginLimiter, async (req, res) => {
+    const { body } = req;
+    const { ssoToken } = body;
+    const { token, success, message } = await loginSSO(ssoToken);
+    const resp = {
+      token,
+      success,
+      message
+    };
+    res.json(resp);
+  });
+
+  /**
+   * @swagger
+   * /auth/validateSSO:
+   *   post:
+   *     consumes:
+   *       - application/json
+   *     produces:
+   *       - application/json
+   *     requestBody:
+   *       description: User's SSO token
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             properties:
+   *               ssoToken:
+   *                 type: string
+   *     responses:
+   *       200:
+   *         description: AuthResponse
+   *     summary: Validates a user's SSO token against external auth providers
+   *     tags:
+   *       - Auth
+   */
+  app.post('/auth/validateSSO', loginLimiter, async (req, res) => {
+    const { body } = req;
+    const { ssoToken } = body;
+    const response = await validateSSOToken(ssoToken);
     res.json(response);
   });
 
