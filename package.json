@@ -10,7 +10,7 @@
     "url": "https://github.com/NASA-AMMOS/aerie-gateway.git"
   },
   "scripts": {
-    "build": "npm run clean && tsc",
+    "build": "npm run clean && tsc && cp ./src/packages/api-playground/pre-request-script dist/packages/api-playground",
     "clean": "rm -rf dist",
     "format": "prettier --write ./src",
     "lint": "eslint ./src --ext .js,.ts",
